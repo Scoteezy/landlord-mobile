@@ -7,6 +7,7 @@ import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
 import MeterCard from "./MeterCard";
 import { ScrollView } from "react-native";
+import { Link } from "expo-router";
 const MeterContainer = () => {
   const data = [
     {

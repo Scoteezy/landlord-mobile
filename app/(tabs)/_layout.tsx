@@ -17,7 +17,6 @@ import { useClientOnlyValue } from "@/components/useClientOnlyValue";
 function TabBarIcon(
   props: Readonly<{
     name: React.ComponentProps<typeof FontAwesome>["name"];
-
     color: string;
   }>
 ) {
@@ -45,7 +44,6 @@ export default function TabLayout() {
           title: "Личный кабинет",
 
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
-
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>

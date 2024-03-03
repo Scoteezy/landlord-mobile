@@ -1,62 +1,139 @@
-import { StyleSheet, Image, Alert, Pressable } from "react-native";
+// import { StyleSheet, Image, Alert,  } from "react-native";
 
 import { Text, View } from "@/components/Themed";
 import { Link } from "expo-router";
+import { useState, useEffect } from "react";
+import { supabase } from "../../lib/supabase";
+import { StyleSheet, Alert, Pressable, Image } from "react-native";
+import { Button, Input } from "react-native-elements";
+import { Session } from "@supabase/supabase-js";
+import Avatar from "../../components/Avatar";
+import Account from "@/components/Account";
+interface Profile {
+  username: string;
+  website: string;
+  avatar_url: string;
+  mobile_number: number;
+}
 export default function TabOneScreen() {
-  let gender = "Мужской";
+  const [loading, setLoading] = useState(true);
+  const [username, setUsername] = useState("");
+  const [website, setWebsite] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [gender, setGender] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [age, setAge] = useState("");
+  const [rentFrom, setRentFrom] = useState();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
+  useEffect(() => {
+    if (session) getProfile();
+  }, [session]);
+  useEffect(() => {
+    if (session) getProfile();
+  }, [session]);
+  async function getProfile() {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error("No user on the session!");
+
+      const { data, error, status } = await supabase
+        .from("profiles")
+        .select(
+          `username, avatar_url,mobile_number,gender,address,age,full_name,rent_from`
+        )
+        .eq("id", session?.user.id)
+        .single();
+      if (error && status !== 406) {
+        throw error;
+      }
+
+      if (data) {
+        setUsername(data.username);
+        setAvatarUrl(data.avatar_url);
+        setPhone(data.mobile_number);
+        setAge(data.age);
+        setGender(data.gender);
+        setAddress(data.address);
+        setFullName(data.full_name);
+        setRentFrom(data.rent_from);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function updateProfile({ avatar_url }: { avatar_url: string }) {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error("No user on the session!");
+
+      const updates = {
+        id: session?.user.id,
+        avatar_url,
+        updated_at: new Date(),
+      };
+
+      const { error } = await supabase.from("profiles").upsert(updates);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <View style={styles.container}>
-      {gender.toLowerCase() === "мужской" ? (
-        <Image
-          source={{
-            uri: "https://www.belizeplanners.org/wp-content/uploads/2016/01/male-placeholder.jpg",
-          }}
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: 100,
-            marginBottom: 50,
-          }}
-        />
-      ) : (
-        <Image
-          source={{
-            uri: "https://thumbs.dreamstime.com/b/person-gray-photo-placeholder-woman-t-shirt-white-background-131683043.jpg",
-          }}
-          style={{
-            width: 100,
-            height: 100,
-            borderRadius: 100,
-            marginBottom: 50,
-          }}
-        />
-      )}
+      <Avatar
+        size={200}
+        url={avatarUrl}
+        onUpload={(url: string) => {
+          setAvatarUrl(url);
+          updateProfile({ avatar_url: url });
+        }}
+      />
 
       <Text style={styles.title}>
-        Имя: <Text style={styles.defaultText}>Денис</Text>
+        Имя пользвателя: <Text style={styles.defaultText}>{username}</Text>
       </Text>
 
       <Text style={styles.title}>
-        Фамилия: <Text style={styles.defaultText}>Бондаренко</Text>
+        ФИ: <Text style={styles.defaultText}>{fullName}</Text>
       </Text>
       <Text style={styles.title}>
-        Возраст: <Text style={styles.defaultText}>20</Text>
+        Возраст: <Text style={styles.defaultText}>{age}</Text>
       </Text>
       <Text style={styles.title}>
         Пол: <Text style={styles.defaultText}>{gender}</Text>
       </Text>
       <Text style={styles.title}>
-        Адрес:{" "}
-        <Text style={styles.defaultText}>
-          г. Ростов-на-Дону, ул. Пешкова 55
-        </Text>
+        Адрес: <Text style={styles.defaultText}>{address}</Text>
       </Text>
       <Text style={styles.title}>
-        Телефон: <Text style={styles.defaultText}>+79198768851</Text>
+        Телефон: <Text style={styles.defaultText}>{phone}</Text>
       </Text>
 
       <Text style={styles.title}>
-        Снимает с : <Text style={styles.defaultText}>06.07.2023</Text>
+        Снимает с : <Text style={styles.defaultText}>{rentFrom || ""}</Text>
       </Text>
       <Link href="/changeModal" asChild>
         <Pressable style={styles.button}>
@@ -66,7 +143,7 @@ export default function TabOneScreen() {
 
       <Pressable
         style={styles.signoutButton}
-        onPress={() => Alert.alert("Simple Button pressed")}
+        onPress={() => supabase.auth.signOut()}
       >
         <Text style={styles.text}>Выйти</Text>
       </Pressable>
