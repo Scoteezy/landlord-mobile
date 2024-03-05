@@ -15,20 +15,22 @@ import { Session } from "@supabase/supabase-js";
 import RNPickerSelect from "react-native-picker-select";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
+import { fetchUserInfo } from "@/services/user";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { fetchUser, updateUser } from "@/store/userSlice";
 export default function ModalScreen() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [session, setSession] = useState<Session | null>(null);
   const [gender, setGender] = useState("");
   const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
   const [rentFrom, setRentFrom] = useState(new Date(1598051730000));
-  const [selectedLanguage, setSelectedLanguage] = useState();
-  const [mode, setMode] = useState<any>("date");
   const [show, setShow] = useState(false);
-
+  const session = useAppSelector((store) => store.session.session);
+  const user = useAppSelector((store) => store.user);
+  const dispatch = useAppDispatch();
   const onChange = (event: any, selectedDate: any) => {
     const currentDate = selectedDate;
     setShow(false);
@@ -48,51 +50,14 @@ export default function ModalScreen() {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-  useEffect(() => {
-    if (session) getProfile();
-  }, [session]);
-  useEffect(() => {
-    if (session) getProfile();
-  }, [session]);
-  async function getProfile() {
-    try {
-      setLoading(true);
-      if (!session?.user) throw new Error("No user on the session!");
-
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(`username,mobile_number,gender,address,age,full_name,rent_from`)
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
-      }
-
-      if (data) {
-        setUsername(data.username);
-        setPhone(data.mobile_number.toString());
-        setAge(data.age.toString());
-        setGender(data.gender);
-        setAddress(data.address);
-        setFullName(data.full_name);
-        setRentFrom(data.rent_from || new Date(1598051730000));
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert(error.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+    setUsername(user.username);
+    setPhone(user.mobile_number.toString());
+    setAge(user.age.toString());
+    setGender(user.gender);
+    setAddress(user.address);
+    setFullName(user.full_name);
+    setRentFrom(new Date(user.rent_from));
+  }, [user]);
   async function updateProfile({
     username,
     full_name,
@@ -126,11 +91,7 @@ export default function ModalScreen() {
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("profiles").upsert(updates);
-
-      if (error) {
-        throw error;
-      }
+      await dispatch(updateUser({ updates, id: session.user.id }));
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message);

@@ -1,43 +1,90 @@
-import { StyleSheet } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 
-import EditScreenInfo from "@/components/EditScreenInfo";
+import { useEffect, useState } from "react";
 import { Text, View } from "@/components/Themed";
-
+import { supabase, base } from "@/lib/supabase";
+import { Session } from "@supabase/supabase-js";
+import { fetchHouseInfo } from "@/services/house";
+import { useAppSelector } from "@/store/hooks";
 export default function TabTwoScreen() {
+  const [builded, setBuilded] = useState();
+  const [address, setAddress] = useState("");
+  const [availible, setAvailible] = useState("");
+  const [rentFrom, setRentFrom] = useState("");
+  const [monthlyPayment, setMonthlyPayment] = useState<number>();
+  const [landlord, setLandlord] = useState("");
+  const [number, setNumber] = useState("");
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  // const [session, setSession] = useState<Session | null>(null);
+  const [landlordId, setLandlordId] = useState("");
+  const session = useAppSelector((store) => store.session.session);
+  // useEffect(() => {
+  //   supabase.auth.getSession().then(({ data: { session } }) => {
+  //     setSession(session);
+  //   });
+
+  //   supabase.auth.onAuthStateChange((_event, session) => {
+  //     setSession(session);
+  //   });
+  // }, []);
+  useEffect(() => {
+    if (session) {
+      getHouse();
+    }
+  }, [session]);
+  async function getHouse() {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error("No user on the session!");
+      const { data, error, status } = await fetchHouseInfo(session);
+      if (error && status !== 406) {
+        throw error;
+      }
+      // console.log(data);
+
+      if (data) {
+        setLandlordId(data.landlord_id);
+        setBuilded(data.builded_at.toString());
+        setAddress(data.address);
+        setAvailible(data.available_from);
+        setRentFrom(data.profiles.rent_from);
+        setMonthlyPayment(data.monthly_payment);
+        setLandlord(data.landlord.full_name);
+        setNumber(data.landlord.phone.toString());
+        setEmail(data.landlord.mail);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
     <View style={styles.container}>
       <View style={styles.aboutHome}>
         <Text style={styles.aboutTitle}>О квартире и доме:</Text>
         <Text style={styles.title}>
-          Год постройки: <Text style={styles.defaultText}>2022</Text>
+          Год постройки: <Text style={styles.defaultText}>{builded}</Text>
         </Text>
         <Text style={styles.title}>
           Ремонт: <Text style={styles.defaultText}>Евроремонт</Text>
         </Text>
         <Text style={styles.title}>
-          Адрес:{" "}
-          <Text style={styles.defaultText}>
-            г. Ростов-на-Дону, ул. Пешкова 55
-          </Text>
+          Адрес: <Text style={styles.defaultText}>{address}</Text>
+        </Text>
+
+        <Text style={styles.title}>
+          Сдается с : <Text style={styles.defaultText}>{availible}</Text>
         </Text>
         <Text style={styles.title}>
-          Подъзед: <Text style={styles.defaultText}>1</Text>
+          Снимает с : <Text style={styles.defaultText}>{rentFrom}</Text>
         </Text>
         <Text style={styles.title}>
-          Квартира: <Text style={styles.defaultText}>22</Text>
-        </Text>
-        <Text style={styles.title}>
-          Сдается с : <Text style={styles.defaultText}>02.06.2021</Text>
-        </Text>
-        <Text style={styles.title}>
-          Квартиросъемщик :{" "}
-          <Text style={styles.defaultText}>Бондаренко Д. О.</Text>
-        </Text>
-        <Text style={styles.title}>
-          Снимает с : <Text style={styles.defaultText}>06.07.2023</Text>
-        </Text>
-        <Text style={styles.title}>
-          Месячная плата : <Text style={styles.defaultText}>20000</Text>
+          Месячная плата :{" "}
+          <Text style={styles.defaultText}>{monthlyPayment}</Text>
         </Text>
       </View>
       <View
@@ -47,14 +94,14 @@ export default function TabTwoScreen() {
       />
       <Text style={styles.aboutTitle}>Об Арендодателе:</Text>
       <Text style={styles.title}>
-        ФИО: <Text style={styles.defaultText}>Тюрин Леонид Игоревич</Text>
+        ФИО: <Text style={styles.defaultText}>{landlord}</Text>
       </Text>
 
       <Text style={styles.title}>
-        Телефон: <Text style={styles.defaultText}>+79198767761</Text>
+        Телефон: <Text style={styles.defaultText}>+7 {number}</Text>
       </Text>
       <Text style={styles.title}>
-        Почта: <Text style={styles.defaultText}>arenda@gmail.com</Text>
+        Почта: <Text style={styles.defaultText}>{email}</Text>
       </Text>
     </View>
   );

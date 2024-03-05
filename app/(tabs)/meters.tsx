@@ -8,8 +8,6 @@ import MyCarousel from "@/components/MeterContainer";
 export default function TabTwoScreen() {
   return (
     <View style={styles.container}>
-      {/* <MeterContainer /
-      > */}
       <MyCarousel />
     </View>
   );

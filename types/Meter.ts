@@ -1,3 +1,5 @@
+import { PostgrestError } from "@supabase/supabase-js";
+
 export type Meter = {
   date: string; // тип для даты можно использовать строку
   rent: {
@@ -9,7 +11,7 @@ export type Meter = {
     price: number; // цена за воду
     isPayed: boolean; // флаг, оплачены ли счета за воду
   };
-  elec: {
+  electricity: {
     meters: number; // показания счетчика электроэнергии
     price: number; // цена за электроэнергию
     isPayed: boolean; // флаг, оплачены ли счета за электроэнергию
@@ -18,4 +20,9 @@ export type Meter = {
     price: number; // цена за интернет
     isPayed: boolean; // флаг, оплачен ли интернет
   };
+};
+export type FetchedMeters = {
+  data: Meter[] | null;
+  status: number;
+  error: PostgrestError | null;
 };

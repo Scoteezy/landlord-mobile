@@ -12,38 +12,17 @@ import {
 import EditScreenInfo from "@/components/EditScreenInfo";
 import { Text, View } from "@/components/Themed";
 import { Link, router } from "expo-router";
-import { useGetPokemonByNameQuery } from "@/services/meter";
 
 export default function ModalScreen() {
   const [name, setName] = useState("Denis");
   const [surname, setSurname] = useState("Bondarenko");
   const [age, setAge] = useState("20");
   // const isPresented = router.canGoBack();
-  const { data, error, isLoading } = useGetPokemonByNameQuery("bulbasaur");
 
   return (
     <View>
       <View style={styles.inputContainer}>
-        <View>
-          {error ? (
-            <Text>Oh no, there was an error</Text>
-          ) : isLoading ? (
-            <Text>Loading...</Text>
-          ) : data ? (
-            <>
-              <Text>{data.species.name}</Text>
-              <Image
-                source={{ uri: data.sprites.front_shiny }}
-                style={{
-                  width: 100,
-                  height: 100,
-                  borderRadius: 100,
-                  marginBottom: 50,
-                }}
-              />
-            </>
-          ) : null}
-        </View>
+        <View></View>
         {
           <>
             <Link href="../" asChild>

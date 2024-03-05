@@ -16,7 +16,10 @@ export default function ModalScreen() {
         darkColor="rgba(255,255,255,0.1)"
       />
       <Text style={styles.title}>
-        Стек: <Text style={styles.defaultText}>React Native, TypeScript</Text>
+        Стек:{" "}
+        <Text style={styles.defaultText}>
+          React Native, TypeScript, SupaBase
+        </Text>
       </Text>
 
       <ExternalLink style={styles.helpLink} href="https://github.com/Scoteezy">

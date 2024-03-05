@@ -5,10 +5,11 @@ import { Link } from "expo-router";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { StyleSheet, Alert, Pressable, Image } from "react-native";
-import { Button, Input } from "react-native-elements";
 import { Session } from "@supabase/supabase-js";
 import Avatar from "../../components/Avatar";
-import Account from "@/components/Account";
+import { fetchUserInfo } from "@/services/user";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { fetchUser, updateUser } from "@/store/userSlice";
 interface Profile {
   username: string;
   website: string;
@@ -18,57 +19,34 @@ interface Profile {
 export default function TabOneScreen() {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState("");
-  const [website, setWebsite] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [session, setSession] = useState<Session | null>(null);
   const [gender, setGender] = useState("");
   const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
-  const [rentFrom, setRentFrom] = useState();
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
+  const [rentFrom, setRentFrom] = useState("");
+  const session = useAppSelector((store) => store.session.session);
+  const user = useAppSelector((store) => store.user);
+  const dispatch = useAppDispatch();
   useEffect(() => {
     if (session) getProfile();
   }, [session]);
   useEffect(() => {
-    if (session) getProfile();
-  }, [session]);
+    setUsername(user.username);
+    setAvatarUrl(user.avatar_url);
+    setPhone(user.mobile_number.toString());
+    setAge(user.age.toString());
+    setGender(user.gender);
+    setAddress(user.address);
+    setFullName(user.full_name);
+    setRentFrom(user.rent_from);
+  }, [user]);
   async function getProfile() {
     try {
       setLoading(true);
       if (!session?.user) throw new Error("No user on the session!");
-
-      const { data, error, status } = await supabase
-        .from("profiles")
-        .select(
-          `username, avatar_url,mobile_number,gender,address,age,full_name,rent_from`
-        )
-        .eq("id", session?.user.id)
-        .single();
-      if (error && status !== 406) {
-        throw error;
-      }
-
-      if (data) {
-        setUsername(data.username);
-        setAvatarUrl(data.avatar_url);
-        setPhone(data.mobile_number);
-        setAge(data.age);
-        setGender(data.gender);
-        setAddress(data.address);
-        setFullName(data.full_name);
-        setRentFrom(data.rent_from);
-      }
+      await dispatch(fetchUser(session));
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message);
@@ -88,11 +66,8 @@ export default function TabOneScreen() {
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("profiles").upsert(updates);
-
-      if (error) {
-        throw error;
-      }
+      // const { error } = await supabase.from("profiles").upsert(updates);
+      dispatch(updateUser({ updates, id: session.user.id }));
     } catch (error) {
       if (error instanceof Error) {
         Alert.alert(error.message);
@@ -137,7 +112,9 @@ export default function TabOneScreen() {
       </Text>
       <Link href="/changeModal" asChild>
         <Pressable style={styles.button}>
-          <Text style={styles.text}>Изменить</Text>
+          <Text style={styles.text}>
+            {loading ? "Подождите.." : "Изменить"}
+          </Text>
         </Pressable>
       </Link>
 

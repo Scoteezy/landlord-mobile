@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
@@ -11,6 +11,9 @@ import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
 
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchSession, updateSession } from "@/store/sessionSlice";
+import { supabase } from "@/lib/supabase";
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 
@@ -25,16 +28,19 @@ function TabBarIcon(
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const dispath = useAppDispatch();
+  const session = useAppSelector((store) => store.session.session);
+  useEffect(() => {
+    dispath(fetchSession(""));
 
+    supabase.auth.onAuthStateChange((_event, session) => {
+      dispath(updateSession(session));
+    });
+  }, []);
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
-
-        // Disable the static render of the header on web
-
-        // to prevent a hydration error in React Navigation v6.
-
         headerShown: useClientOnlyValue(false, true),
       }}
     >
@@ -42,7 +48,6 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Личный кабинет",
-
           tabBarIcon: ({ color }) => <TabBarIcon name="user" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>

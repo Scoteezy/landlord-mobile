@@ -1,14 +1,31 @@
-import React from "react";
-import { StyleSheet } from "react-native";
-import { Text, View } from "@/components/Themed";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Colors from "@/constants/Colors";
-
-import { useColorScheme } from "@/components/useColorScheme";
+import { useEffect, useState } from "react";
+import { Alert, StyleSheet } from "react-native";
 import MeterCard from "./MeterCard";
 import { ScrollView } from "react-native";
-import { Link } from "expo-router";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchMeters } from "@/store/meterSlice";
+import { Text } from "./Themed";
 const MeterContainer = () => {
+  const session = useAppSelector((store) => store.session.session);
+  const meters = useAppSelector((store) => store.meters.meters);
+  const [loading, setLoading] = useState(true);
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    if (session) getMeters();
+  }, [session]);
+  async function getMeters() {
+    try {
+      setLoading(true);
+      if (!session?.user) throw new Error("No user on the session!");
+      await dispatch(fetchMeters(session));
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
   const data = [
     {
       date: "Февраль 2024",
@@ -55,9 +72,11 @@ const MeterContainer = () => {
   ];
   return (
     <ScrollView style={styles.container}>
-      {data.map((item) => (
-        <MeterCard key={item.date} {...item} />
-      ))}
+      {loading ? (
+        <Text style={styles.title}>"Загрузка..."</Text>
+      ) : (
+        meters.map((item) => <MeterCard key={item.date} {...item} />)
+      )}
     </ScrollView>
   );
 };
@@ -66,5 +85,10 @@ export default MeterContainer;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 5,
   },
 });

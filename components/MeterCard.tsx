@@ -5,8 +5,8 @@ import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Colors from "@/constants/Colors";
 
 import { useColorScheme } from "@/components/useColorScheme";
-import { useGetPokemonByNameQuery } from "@/services/meter";
 import { Link } from "expo-router";
+import { Meter } from "@/types/Meter";
 
 interface CardProps {
   date: string; // тип для даты можно использовать строку
@@ -16,10 +16,10 @@ interface CardProps {
   };
   water: {
     meters: number; // показания счетчика воды
-    price: number; // цена за воду
+    price: number;
     isPayed: boolean; // флаг, оплачены ли счета за воду
   };
-  elec: {
+  electricity: {
     meters: number; // показания счетчика электроэнергии
     price: number; // цена за электроэнергию
     isPayed: boolean; // флаг, оплачены ли счета за электроэнергию
@@ -30,9 +30,9 @@ interface CardProps {
   };
 }
 
-const MeterCard = ({ date, rent, water, elec, ethernet }: CardProps) => {
+const MeterCard = ({ date, rent, water, electricity, ethernet }: Meter) => {
   const colorScheme = useColorScheme();
-  const { data, error, isLoading } = useGetPokemonByNameQuery("bulbasaur");
+  console.log(rent.isPayed);
   return (
     <View style={styles.container}>
       <Text style={styles.monthTitle}>{date}</Text>
@@ -41,7 +41,7 @@ const MeterCard = ({ date, rent, water, elec, ethernet }: CardProps) => {
         <Text style={styles.defaultText}>Цена: {rent.price} Руб.</Text>
         <Text style={styles.defaultText}>
           Оплачено:{" "}
-          {water.isPayed ? (
+          {rent.isPayed ? (
             <FontAwesome
               name="check-circle-o"
               size={25}
@@ -87,12 +87,12 @@ const MeterCard = ({ date, rent, water, elec, ethernet }: CardProps) => {
       <View style={styles.infoContainer}>
         <Text style={styles.title}>Электричество:</Text>
         <Text style={styles.defaultText}>
-          Показания счетчиков: {elec.meters}
+          Показания счетчиков: {electricity.meters}
         </Text>
-        <Text style={styles.defaultText}>Цена: {elec.price} Руб.</Text>
+        <Text style={styles.defaultText}>Цена: {electricity.price} Руб.</Text>
         <Text style={styles.defaultText}>
           Оплачено:{" "}
-          {elec.isPayed ? (
+          {electricity.isPayed ? (
             <FontAwesome
               name="check-circle-o"
               size={25}
@@ -130,26 +130,6 @@ const MeterCard = ({ date, rent, water, elec, ethernet }: CardProps) => {
             />
           )}
         </Text>
-      </View>
-      <View style={styles.infoContainer}>
-        {error ? (
-          <Text>Oh no, there was an error</Text>
-        ) : isLoading ? (
-          <Text>Loading...</Text>
-        ) : data ? (
-          <>
-            <Text>{data.species.name}</Text>
-            <Image
-              source={{ uri: data.sprites.front_shiny }}
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 100,
-                marginBottom: 50,
-              }}
-            />
-          </>
-        ) : null}
       </View>
       <Link href="/meterModal" asChild>
         <Pressable style={styles.button}>
